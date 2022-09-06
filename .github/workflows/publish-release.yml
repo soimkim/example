@@ -1,0 +1,28 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Sample with SBOM generation
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - run: npm ci
+    - run: npm test
+    - name: Generate SBOM
+      run: |
+        curl -Lo $RUNNER_TEMP/sbom-tool https://github.com/microsoft/sbom-tool/releases/latest/download/sbom-tool-linux-x64
+        chmod +x $RUNNER_TEMP/sbom-tool
+        $RUNNER_TEMP/sbom-tool generate -b ./LICENSES -bc . -pn Test -pv 1.0.0 -ps LGE -nsb https://sbom.mycompany.com -V Verbose
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.0
+      with:
+        path: LICENSES
